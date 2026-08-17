@@ -6,15 +6,31 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const repositoryRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const upstreamCommit = "82bdab83d4b8b63901b575d92e86b2b976b741c8";
-const upstreamRepository = "https://github.com/TheCodeArtist/deep-thought-tabs";
-const sourcePath = join(repositoryRoot, "sources", "deep-thought-tabs", "deepThoughtsArray.js");
 
-const source = await readFile(sourcePath, "utf8");
-const quotes = vm.runInNewContext(`${source}\nquotes`, Object.create(null), { timeout: 1000 });
+const sources = {
+  fortunes: {
+    repository: "https://github.com/JKirchartz/fortunes",
+    commit: "e9657c7521887d83cd932e4a95a210e9cdde8fab"
+  },
+  deepThoughtTabs: {
+    repository: "https://github.com/TheCodeArtist/deep-thought-tabs",
+    commit: "82bdab83d4b8b63901b575d92e86b2b976b741c8"
+  }
+};
 
-if (!Array.isArray(quotes) || quotes.length === 0) {
-  throw new Error("The vendored Deep Thought Tabs source did not produce a quote array.");
+function normalize(text) {
+  return text
+    .replace(/``/g, '"')
+    .replace(/''/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseFortunes(source) {
+  return source
+    .split(/^%\s*$/m)
+    .map(entry => entry.trim())
+    .filter(Boolean);
 }
 
 function decodeHtml(text) {
@@ -27,56 +43,123 @@ function decodeHtml(text) {
 }
 
 function plainText(html) {
-  return decodeHtml(html)
+  return normalize(decodeHtml(html)
     .replace(/<br\s*\/?\s*>/gi, " ")
     .replace(/<br\s*\\?>/gi, " ")
     .replace(/<\/p>\s*<p>/gi, " ")
     .replace(/<[^>]*>/g, " ")
-    .replace(/\/?p>/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/\/?p>/gi, " "));
 }
 
-const seen = new Set();
-const records = [];
+function removeLastLine(entry) {
+  const lines = entry.split("\n");
+  const attribution = lines.pop().trim();
+  return { text: normalize(lines.join("\n")), attribution };
+}
 
-for (const quote of quotes) {
-  const text = plainText(quote);
-  if (!text || seen.has(text)) continue;
-  seen.add(text);
+const records = [];
+const seen = new Set();
+const sourceCounts = { "jack-handey": 0, showerthoughts: 0, "deep-thought-tabs": 0 };
+const duplicateCounts = { "jack-handey": 0, showerthoughts: 0, "deep-thought-tabs": 0 };
+
+function addRecord(record) {
+  const text = normalize(record.text);
+  const dedupeKey = text.toLocaleLowerCase("en-US");
+  if (!text || seen.has(dedupeKey)) {
+    duplicateCounts[record.category] += 1;
+    return;
+  }
+
+  seen.add(dedupeKey);
+  sourceCounts[record.category] += 1;
   records.push({
-    id: `deep-thought-${String(records.length + 1).padStart(4, "0")}`,
-    creator: "Deep Thought Tabs collection",
-    title: "Deep Thought",
-    category: "human-curated",
-    kind: "upstream-collection",
-    text,
-    work: "Deep Thought Tabs",
-    source_url: `${upstreamRepository}/blob/${upstreamCommit}/addon-src/deepThoughtsArray.js`,
-    source_commit: upstreamCommit
+    id: `deep-thought-${String(records.length + 1).padStart(5, "0")}`,
+    ...record,
+    text
   });
 }
 
-if (records.length !== quotes.length) {
-  throw new Error(`Expected ${quotes.length} unique source entries, produced ${records.length}.`);
+const handeyPath = join(repositoryRoot, "sources", "jkirchartz-fortunes", "handey");
+const handeyEntries = parseFortunes(await readFile(handeyPath, "utf8"));
+
+for (const entry of handeyEntries) {
+  const { text } = removeLastLine(entry);
+  addRecord({
+    creator: "Jack Handey",
+    title: "Jack Handey",
+    category: "jack-handey",
+    kind: "attributed-quotation",
+    text,
+    work: "Deep Thoughts and other collected quotations",
+    source_url: `${sources.fortunes.repository}/blob/${sources.fortunes.commit}/handey`,
+    source_commit: sources.fortunes.commit
+  });
+}
+
+const showerthoughtsPath = join(repositoryRoot, "sources", "jkirchartz-fortunes", "showerthoughts");
+const showerthoughtEntries = parseFortunes(await readFile(showerthoughtsPath, "utf8"));
+
+for (const entry of showerthoughtEntries) {
+  const { text, attribution } = removeLastLine(entry);
+  const match = attribution.match(/^―(.+?),\s*([A-Z][a-z]{2}\s+\d{4})$/u);
+  addRecord({
+    creator: match ? `u/${match[1]}` : attribution.replace(/^―/u, "").trim(),
+    title: "Shower Thought",
+    category: "showerthoughts",
+    kind: "reddit-submission",
+    text,
+    work: "Reddit r/Showerthoughts collection",
+    source_date: match ? match[2] : null,
+    source_url: `${sources.fortunes.repository}/blob/${sources.fortunes.commit}/showerthoughts`,
+    source_commit: sources.fortunes.commit
+  });
+}
+
+const deepThoughtTabsPath = join(repositoryRoot, "sources", "deep-thought-tabs", "deepThoughtsArray.js");
+const deepThoughtTabsSource = await readFile(deepThoughtTabsPath, "utf8");
+const deepThoughtTabsQuotes = vm.runInNewContext(
+  `${deepThoughtTabsSource}\nquotes`,
+  Object.create(null),
+  { timeout: 1000 }
+);
+
+for (const quote of deepThoughtTabsQuotes) {
+  addRecord({
+    creator: "Deep Thought Tabs collection",
+    title: "Deep Thought",
+    category: "deep-thought-tabs",
+    kind: "upstream-collection",
+    text: plainText(quote),
+    work: "Deep Thought Tabs",
+    source_url: `${sources.deepThoughtTabs.repository}/blob/${sources.deepThoughtTabs.commit}/addon-src/deepThoughtsArray.js`,
+    source_commit: sources.deepThoughtTabs.commit
+  });
+}
+
+if (handeyEntries.length !== 529) {
+  throw new Error(`Expected 529 Handey source entries, received ${handeyEntries.length}.`);
+}
+if (showerthoughtEntries.length !== 10000) {
+  throw new Error(`Expected 10000 Showerthought source entries, received ${showerthoughtEntries.length}.`);
+}
+if (!Array.isArray(deepThoughtTabsQuotes) || deepThoughtTabsQuotes.length !== 177) {
+  throw new Error(`Expected 177 Deep Thought Tabs entries, received ${deepThoughtTabsQuotes.length}.`);
 }
 
 const collection = {
-  schema_version: "3.0.0",
+  schema_version: "4.0.0",
   title: "Deep Thoughts",
-  description: "Human-curated funny and mock-profound observations from the Deep Thought Tabs repository.",
-  license: "BSD-3-Clause",
-  generated_at: "2026-02-04T19:57:37Z",
-  generation_notes: "Mechanical HTML-to-plain-text conversion of a pinned upstream collection; no AI-generated entries.",
+  description: "Human-written Jack Handey quotations, attributed Reddit shower thoughts, and the Deep Thought Tabs collection.",
+  license: "Mixed; see DATA-LICENSE",
+  generated_at: "2026-08-17T00:00:00Z",
+  generation_notes: "Mechanical parsing and deduplication of pinned human-written collections; no AI-generated entries.",
   record_count: records.length,
-  counts_by_category: { "human-curated": records.length },
-  upstream: {
-    repository: upstreamRepository,
-    commit: upstreamCommit,
-    source_file: "addon-src/deepThoughtsArray.js"
-  },
+  counts_by_category: sourceCounts,
+  duplicates_omitted_by_category: duplicateCounts,
+  upstream: sources,
   records
 };
 
 await writeFile(join(repositoryRoot, "thoughts.json"), `${JSON.stringify(collection, null, 2)}\n`);
-process.stdout.write(`Wrote ${records.length} human-curated thoughts from Deep Thought Tabs.\n`);
+process.stdout.write(`Wrote ${records.length} human-written thoughts.\n`);
+process.stdout.write(`${JSON.stringify({ sourceCounts, duplicateCounts })}\n`);

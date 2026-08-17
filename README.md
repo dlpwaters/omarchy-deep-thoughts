@@ -22,14 +22,24 @@ omarchy plugin add https://github.com/dlpwaters/omarchy-deep-thoughts.git --enab
 
 ## Collection
 
-The bundled collection is a pinned snapshot of the human-curated
-[Deep Thought Tabs](https://github.com/TheCodeArtist/deep-thought-tabs) corpus.
-It is built around funny, absurd, mock-profound observations and contains no
-AI-generated or template-combined entries.
+The bundled collection contains 10,490 unique human-written entries:
 
-The upstream source is pinned to commit
-`82bdab83d4b8b63901b575d92e86b2b976b741c8` and vendored under
-`sources/deep-thought-tabs/` so the build is reproducible and works offline.
+- 463 unique Jack Handey quotations
+- 9,909 attributed Reddit r/Showerthoughts submissions
+- 118 additional entries from the Deep Thought Tabs collection
+
+The source files come from the Unlicense-licensed
+[JKirchartz/fortunes](https://github.com/JKirchartz/fortunes) repository and the
+BSD-licensed [Deep Thought Tabs](https://github.com/TheCodeArtist/deep-thought-tabs)
+repository. Both are pinned to exact commits and vendored under `sources/`, so
+the build is reproducible and the plugin remains fully offline.
+
+The build mechanically parses and deduplicates those collections. It does not
+generate, rewrite, or template-combine any entry. Reddit usernames and source
+dates are retained where the upstream collection provides them.
+
+The Reddit collection is broad and includes occasional adult, crude, political,
+or dark humor.
 
 Rebuild the bundled data with:
 
@@ -48,6 +58,7 @@ telemetry, account, daemon, or privileged component.
 
 ## License
 
-Plugin code is MIT licensed. The vendored Deep Thought Tabs source and the
-mechanically converted collection retain the upstream BSD 3-Clause license;
-see `DATA-LICENSE` and `sources/deep-thought-tabs/LICENSE`.
+Plugin code is MIT licensed. Vendored repository files retain their respective
+upstream Unlicense and BSD 3-Clause terms. Quoted text remains attributable to
+Jack Handey or the named Reddit submitter; see `DATA-LICENSE` for the complete
+provenance and rights notice.
