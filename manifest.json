@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "dlpwaters.deep-thoughts",
+  "name": "Deep Thoughts",
+  "version": "1.0.0",
+  "author": "DLP Waters",
+  "license": "MIT",
+  "description": "A brain in the Omarchy bar that deals a nonrepeating random satirical thought",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Deep Thoughts",
+    "description": "Click through 709 public-domain satirical thoughts in shuffled order",
+    "category": "Fun",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
