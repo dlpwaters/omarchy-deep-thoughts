@@ -1,0 +1,29 @@
+Deep Thoughts collection provenance and rights notice
+
+Source 1: JKirchartz/fortunes
+Repository: https://github.com/JKirchartz/fortunes
+Pinned commit: e9657c7521887d83cd932e4a95a210e9cdde8fab
+Vendored files: handey, showerthoughts
+Repository license: Unlicense
+License copy: sources/jkirchartz-fortunes/LICENSE
+
+The handey file attributes its quotations to Jack Handey. The showerthoughts
+file attributes submissions to Reddit usernames and dates and identifies its
+source as Reddit submission histories. The build retains those attributions.
+
+Source 2: TheCodeArtist/deep-thought-tabs
+Repository: https://github.com/TheCodeArtist/deep-thought-tabs
+Pinned commit: 82bdab83d4b8b63901b575d92e86b2b976b741c8
+Vendored file: addon-src/deepThoughtsArray.js
+Repository license: BSD-3-Clause
+License copy: sources/deep-thought-tabs/LICENSE
+
+The upstream repository licenses apply to the repository material supplied by
+their maintainers. Jack Handey quotations and Reddit submissions remain
+attributable to their respective authors; inclusion in a public repository or
+an Unlicense-licensed compilation does not itself establish that the underlying
+text is public domain.
+
+The generated thoughts.json is a mechanical parsing and deduplication of these
+pinned files. It contains no AI-generated, model-generated, rewritten, or
+combinatorially generated entries.

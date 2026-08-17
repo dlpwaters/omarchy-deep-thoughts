@@ -1,67 +1,165 @@
 #!/usr/bin/env node
 
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const repositoryRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const sourceUrl = "https://www.gutenberg.org/files/972/972-0.txt";
-const sourcePage = "https://www.gutenberg.org/ebooks/972";
-const headingPattern = /^([A-Z][A-Z'’ -]{1,45}),\s+(.{1,22}?)\s{2,}(.*)$/;
-const excludedTerms = new Set([
-  "ABORIGINIES", "AFRICAN", "ALIEN", "CHINESE", "HEATHEN", "INDIAN",
-  "JEW", "MARRIAGE", "NEGRO", "WIDOW", "WIFE", "WOMAN"
-]);
-const excludedLanguage =
-  /\b(?:aborigin\w*|afric\w*|arab\w*|asian\w*|chinaman|chinese|christian\w*|female\w*|girl\w*|heathen\w*|hebrew\w*|indian\w*|jew\w*|mahom\w*|male\w*|mohammedan\w*|mormon\w*|mulatto|negro|nigger|oriental\w*|race\w*|redskin|savage|squaw|tribe\w*|wife|wives|woman|women)\b/i;
 
-function normalize(lines) {
-  return lines.join(" ").replace(/-\s+/g, "-").replace(/\s+/g, " ").trim();
-}
-
-function parse(text) {
-  const body = text.split("*** START OF THE PROJECT GUTENBERG EBOOK 972 ***")[1]
-    ?.split("*** END OF THE PROJECT GUTENBERG EBOOK 972 ***")[0];
-  if (!body) throw new Error("Project Gutenberg book markers were not found.");
-  const lines = body.replace(/\r/g, "").split("\n");
-  const records = [];
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const match = lines[index].match(headingPattern);
-    if (!match || !/[a-z]\./.test(match[2])) continue;
-    const [, term, partOfSpeech, opening] = match;
-    const paragraph = [opening];
-    for (let cursor = index + 1; cursor < lines.length && lines[cursor].trim() !== ""; cursor += 1) {
-      if (headingPattern.test(lines[cursor])) break;
-      paragraph.push(lines[cursor].trim());
-    }
-    const thought = normalize(paragraph);
-    if (excludedTerms.has(term) || excludedLanguage.test(`${term} ${thought}`)
-        || thought.length < 12 || thought.length > 360 || /^\[/.test(thought)) continue;
-
-    records.push({
-      id: `bierce-${String(records.length + 1).padStart(4, "0")}`,
-      creator: "Ambrose Bierce",
-      title: term,
-      part_of_speech: partOfSpeech.trim(),
-      text: thought,
-      work: "The Devil's Dictionary",
-      source_url: sourcePage,
-    });
+const sources = {
+  fortunes: {
+    repository: "https://github.com/JKirchartz/fortunes",
+    commit: "e9657c7521887d83cd932e4a95a210e9cdde8fab"
+  },
+  deepThoughtTabs: {
+    repository: "https://github.com/TheCodeArtist/deep-thought-tabs",
+    commit: "82bdab83d4b8b63901b575d92e86b2b976b741c8"
   }
-  return records;
+};
+
+function normalize(text) {
+  return text
+    .replace(/``/g, '"')
+    .replace(/''/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-const response = await fetch(sourceUrl, { headers: { "user-agent": "omarchy-deep-thoughts/1.0" } });
-if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-const records = parse(await response.text());
+function parseFortunes(source) {
+  return source
+    .split(/^%\s*$/m)
+    .map(entry => entry.trim())
+    .filter(Boolean);
+}
+
+function decodeHtml(text) {
+  return text
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(?:39|x27);/gi, "'")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+}
+
+function plainText(html) {
+  return normalize(decodeHtml(html)
+    .replace(/<br\s*\/?\s*>/gi, " ")
+    .replace(/<br\s*\\?>/gi, " ")
+    .replace(/<\/p>\s*<p>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\/?p>/gi, " "));
+}
+
+function removeLastLine(entry) {
+  const lines = entry.split("\n");
+  const attribution = lines.pop().trim();
+  return { text: normalize(lines.join("\n")), attribution };
+}
+
+const records = [];
+const seen = new Set();
+const sourceCounts = { "jack-handey": 0, showerthoughts: 0, "deep-thought-tabs": 0 };
+const duplicateCounts = { "jack-handey": 0, showerthoughts: 0, "deep-thought-tabs": 0 };
+
+function addRecord(record) {
+  const text = normalize(record.text);
+  const dedupeKey = text.toLocaleLowerCase("en-US");
+  if (!text || seen.has(dedupeKey)) {
+    duplicateCounts[record.category] += 1;
+    return;
+  }
+
+  seen.add(dedupeKey);
+  sourceCounts[record.category] += 1;
+  records.push({
+    id: `deep-thought-${String(records.length + 1).padStart(5, "0")}`,
+    ...record,
+    text
+  });
+}
+
+const handeyPath = join(repositoryRoot, "sources", "jkirchartz-fortunes", "handey");
+const handeyEntries = parseFortunes(await readFile(handeyPath, "utf8"));
+
+for (const entry of handeyEntries) {
+  const { text } = removeLastLine(entry);
+  addRecord({
+    creator: "Jack Handey",
+    title: "Jack Handey",
+    category: "jack-handey",
+    kind: "attributed-quotation",
+    text,
+    work: "Deep Thoughts and other collected quotations",
+    source_url: `${sources.fortunes.repository}/blob/${sources.fortunes.commit}/handey`,
+    source_commit: sources.fortunes.commit
+  });
+}
+
+const showerthoughtsPath = join(repositoryRoot, "sources", "jkirchartz-fortunes", "showerthoughts");
+const showerthoughtEntries = parseFortunes(await readFile(showerthoughtsPath, "utf8"));
+
+for (const entry of showerthoughtEntries) {
+  const { text, attribution } = removeLastLine(entry);
+  const match = attribution.match(/^―(.+?),\s*([A-Z][a-z]{2}\s+\d{4})$/u);
+  addRecord({
+    creator: match ? `u/${match[1]}` : attribution.replace(/^―/u, "").trim(),
+    title: "Shower Thought",
+    category: "showerthoughts",
+    kind: "reddit-submission",
+    text,
+    work: "Reddit r/Showerthoughts collection",
+    source_date: match ? match[2] : null,
+    source_url: `${sources.fortunes.repository}/blob/${sources.fortunes.commit}/showerthoughts`,
+    source_commit: sources.fortunes.commit
+  });
+}
+
+const deepThoughtTabsPath = join(repositoryRoot, "sources", "deep-thought-tabs", "deepThoughtsArray.js");
+const deepThoughtTabsSource = await readFile(deepThoughtTabsPath, "utf8");
+const deepThoughtTabsQuotes = vm.runInNewContext(
+  `${deepThoughtTabsSource}\nquotes`,
+  Object.create(null),
+  { timeout: 1000 }
+);
+
+for (const quote of deepThoughtTabsQuotes) {
+  addRecord({
+    creator: "Deep Thought Tabs collection",
+    title: "Deep Thought",
+    category: "deep-thought-tabs",
+    kind: "upstream-collection",
+    text: plainText(quote),
+    work: "Deep Thought Tabs",
+    source_url: `${sources.deepThoughtTabs.repository}/blob/${sources.deepThoughtTabs.commit}/addon-src/deepThoughtsArray.js`,
+    source_commit: sources.deepThoughtTabs.commit
+  });
+}
+
+if (handeyEntries.length !== 529) {
+  throw new Error(`Expected 529 Handey source entries, received ${handeyEntries.length}.`);
+}
+if (showerthoughtEntries.length !== 10000) {
+  throw new Error(`Expected 10000 Showerthought source entries, received ${showerthoughtEntries.length}.`);
+}
+if (!Array.isArray(deepThoughtTabsQuotes) || deepThoughtTabsQuotes.length !== 177) {
+  throw new Error(`Expected 177 Deep Thought Tabs entries, received ${deepThoughtTabsQuotes.length}.`);
+}
+
 const collection = {
-  schema_version: "1.0.0",
+  schema_version: "4.0.0",
   title: "Deep Thoughts",
-  description: "Public-domain satirical definitions curated for an absurdist, aphoristic tone.",
-  source_url: sourcePage,
+  description: "Human-written Jack Handey quotations, attributed Reddit shower thoughts, and the Deep Thought Tabs collection.",
+  license: "Mixed; see DATA-LICENSE",
+  generated_at: "2026-08-17T00:00:00Z",
+  generation_notes: "Mechanical parsing and deduplication of pinned human-written collections; no AI-generated entries.",
   record_count: records.length,
-  records,
+  counts_by_category: sourceCounts,
+  duplicates_omitted_by_category: duplicateCounts,
+  upstream: sources,
+  records
 };
+
 await writeFile(join(repositoryRoot, "thoughts.json"), `${JSON.stringify(collection, null, 2)}\n`);
-process.stdout.write(`Wrote ${records.length} thoughts.\n`);
+process.stdout.write(`Wrote ${records.length} human-written thoughts.\n`);
+process.stdout.write(`${JSON.stringify({ sourceCounts, duplicateCounts })}\n`);
