@@ -22,14 +22,14 @@ omarchy plugin add https://github.com/dlpwaters/omarchy-deep-thoughts.git --enab
 
 ## Collection
 
-The bundled collection contains more than a thousand original modern thoughts:
-deadpan observations, shower-thought logic, mundane surrealism, literal-minded
-reversals, and mock profundity. It covers technology, home life, food, work,
-language, time, the body, animals, and everyday existence.
+The bundled collection is a pinned snapshot of the human-curated
+[Deep Thought Tabs](https://github.com/TheCodeArtist/deep-thought-tabs) corpus.
+It is built around funny, absurd, mock-profound observations and contains no
+AI-generated or template-combined entries.
 
-Mitch Hedberg, Jack Handey, and Reddit's Showerthoughts community were researched
-only for broad comic traits. Their jokes and posts are not reproduced. See
-`research-sources.json` for the source index and provenance policy.
+The upstream source is pinned to commit
+`82bdab83d4b8b63901b575d92e86b2b976b741c8` and vendored under
+`sources/deep-thought-tabs/` so the build is reproducible and works offline.
 
 Rebuild the bundled data with:
 
@@ -48,5 +48,6 @@ telemetry, account, daemon, or privileged component.
 
 ## License
 
-Plugin code is MIT licensed. The original bundled thought collection is
-released under CC0 1.0 so it can be remixed and redistributed freely.
+Plugin code is MIT licensed. The vendored Deep Thought Tabs source and the
+mechanically converted collection retain the upstream BSD 3-Clause license;
+see `DATA-LICENSE` and `sources/deep-thought-tabs/LICENSE`.

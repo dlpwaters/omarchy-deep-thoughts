@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dlpwaters.deep-thoughts",
   "name": "Deep Thoughts",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "author": "DLP Waters",
   "license": "MIT",
   "description": "A brain in the Omarchy bar that deals nonrepeating modern, funny, absurd thoughts",
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "Deep Thoughts",
-    "description": "Click through a huge original collection of modern absurd thoughts in shuffled order",
+    "description": "Click through a human-curated collection of funny, absurd thoughts in shuffled order",
     "category": "Fun",
     "allowMultiple": false,
     "defaultSection": "right"

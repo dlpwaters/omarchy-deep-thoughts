@@ -1,17 +1,13 @@
-# Contributing a thought
+# Contributing
 
-Original community submissions are welcome. A contribution should be:
+This plugin mirrors the human-curated Deep Thought Tabs collection rather than
+maintaining a separate generated or user-submitted corpus.
 
-- your own writing;
-- one or two short sentences, no more than 360 characters;
-- deadpan, absurd, observational, or mock-profound;
-- understandable without a setup paragraph;
-- free of attacks on protected or vulnerable groups.
+For new thoughts, contribute to the upstream collection first:
+https://github.com/TheCodeArtist/deep-thought-tabs
 
-Do not submit quotations, comedy material, social-media posts, or lightly
-rewritten work by somebody else. By contributing, you agree to release the
-submitted text under CC0 1.0.
+After an upstream change is accepted, update the pinned commit and the vendored
+`deepThoughtsArray.js`, preserve the upstream license, run
+`node scripts/build-data.mjs`, and include the regenerated `thoughts.json`.
 
-Add handcrafted entries to the `handcrafted` array in
-`scripts/build-data.mjs`, run the build script, and include the regenerated
-`thoughts.json` in the pull request.
+Do not add AI-generated, template-combined, scraped, or unattributed material.

@@ -1,7 +1,16 @@
-CC0 1.0 Universal
+Deep Thoughts collection provenance
 
-To the extent possible under law, the person who associated CC0 with the
-original Deep Thoughts dataset has waived all copyright and related or
-neighboring rights to the dataset and its original text.
+The bundled collection is a mechanical plain-text conversion of the quote
+array in TheCodeArtist/deep-thought-tabs, pinned at commit:
 
-https://creativecommons.org/publicdomain/zero/1.0/
+82bdab83d4b8b63901b575d92e86b2b976b741c8
+
+Upstream repository:
+https://github.com/TheCodeArtist/deep-thought-tabs
+
+Upstream source file:
+addon-src/deepThoughtsArray.js
+
+The upstream repository identifies the work as BSD-3-Clause licensed. A copy
+of its license is preserved at sources/deep-thought-tabs/LICENSE. No
+AI-generated, model-generated, or combinatorially generated lines are included.
