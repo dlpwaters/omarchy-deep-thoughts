@@ -13,6 +13,12 @@ runs no background service.
 omarchy plugin add https://github.com/dlpwaters/omarchy-deep-thoughts.git --enable --yes
 ```
 
+## Remove
+
+```bash
+omarchy plugin remove dlpwaters.deep-thoughts
+```
+
 ## Controls
 
 - Click the brain icon: open with a new thought
