@@ -212,17 +212,18 @@ Panel {
             onClicked: root.copyThought()
           }
 
-          Item { width: Math.max(0, parent.width - Style.space(270)); height: 1 }
+        }
 
-          Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.thought.total
-              ? String(root.thought.remaining_in_cycle) + " of " + String(root.thought.total) + " unseen"
-              : ""
-            color: Qt.darker(root.contentForeground, 1.55)
-            font.family: root.contentFontFamily
-            font.pixelSize: Style.font.caption
-          }
+        Text {
+          width: parent.width
+          text: root.thought.total
+            ? String(root.thought.remaining_in_cycle) + " / " + String(root.thought.total) + " unseen"
+            : ""
+          color: Qt.darker(root.contentForeground, 1.55)
+          font.family: root.contentFontFamily
+          font.pixelSize: Style.font.caption
+          horizontalAlignment: Text.AlignRight
+          elide: Text.ElideLeft
         }
 
         Text {
