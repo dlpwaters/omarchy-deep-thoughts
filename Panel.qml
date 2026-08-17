@@ -44,8 +44,7 @@ Panel {
   function copyThought() {
     if (!root.thought.text) return
     var output = String(root.thought.text)
-      + " — " + String(root.thought.creator || "Ambrose Bierce")
-      + ", " + String(root.thought.work || "The Devil's Dictionary")
+      + " — " + String(root.thought.creator || "Omarchy Deep Thoughts")
     Quickshell.execDetached(["wl-copy", output])
     root.copiedText = "Copied"
     copiedTimer.restart()
@@ -175,8 +174,7 @@ Panel {
           Text {
             visible: root.errorMessage === "" && root.hasThought
             width: parent.width
-            text: "— " + String(root.thought.creator || "Ambrose Bierce")
-              + " · " + String(root.thought.title || "")
+            text: "— " + String(root.thought.title || "Deep Thought")
             color: Qt.darker(root.contentForeground, 1.35)
             font.family: root.contentFontFamily
             font.pixelSize: Style.font.body

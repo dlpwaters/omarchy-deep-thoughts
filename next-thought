@@ -5,6 +5,7 @@ plugin_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 data_file="$plugin_dir/thoughts.json"
 cache_base="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy-deep-thoughts"
 state_file="$cache_base/shuffle"
+count_file="$cache_base/collection-count"
 lock_file="$cache_base/lock"
 
 mkdir -p "$cache_base"
@@ -14,7 +15,7 @@ flock 9
 total="$(jq -er '.records | length | select(. > 0)' "$data_file")"
 
 valid_state=false
-if [[ -s "$state_file" ]]; then
+if [[ -s "$state_file" && -f "$count_file" && "$(cat "$count_file")" == "$total" ]]; then
   if awk -v max="$total" 'NF != 1 || $1 !~ /^[0-9]+$/ || $1 >= max { exit 1 }' "$state_file"; then
     valid_state=true
   fi
@@ -22,6 +23,7 @@ fi
 
 if [[ "$valid_state" != true ]]; then
   shuf -i "0-$((total - 1))" > "$state_file"
+  printf '%s\n' "$total" > "$count_file"
 fi
 
 index="$(sed -n '1p' "$state_file")"

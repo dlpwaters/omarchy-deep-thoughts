@@ -22,13 +22,14 @@ omarchy plugin add https://github.com/dlpwaters/omarchy-deep-thoughts.git --enab
 
 ## Collection
 
-The bundled collection contains 709 short, public-domain satirical definitions
-from Ambrose Bierce's *The Devil's Dictionary*, sourced from
-[Project Gutenberg eBook 972](https://www.gutenberg.org/ebooks/972). Long verse
-passages and dated identity-targeted entries are excluded.
+The bundled collection contains more than a thousand original modern thoughts:
+deadpan observations, shower-thought logic, mundane surrealism, literal-minded
+reversals, and mock profundity. It covers technology, home life, food, work,
+language, time, the body, animals, and everyday existence.
 
-The Jack Handey material in the local source catalog is metadata-only and is
-not redistributed as text in this public plugin.
+Mitch Hedberg, Jack Handey, and Reddit's Showerthoughts community were researched
+only for broad comic traits. Their jokes and posts are not reproduced. See
+`research-sources.json` for the source index and provenance policy.
 
 Rebuild the bundled data with:
 
@@ -47,5 +48,5 @@ telemetry, account, daemon, or privileged component.
 
 ## License
 
-Plugin code is MIT licensed. The bundled Bierce text is public domain in the
-United States; its transcription source is Project Gutenberg.
+Plugin code is MIT licensed. The original bundled thought collection is
+released under CC0 1.0 so it can be remixed and redistributed freely.
